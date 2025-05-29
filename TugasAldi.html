@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spinner Quiz Hewan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    flex-direction: column;
+  }
+  h1 {
+    margin-bottom: 0.5rem;
+  }
+  #spinner-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: 2rem auto 1rem;
+  }
+  #spinner {
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    border: 12px solid #fff;
+    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  #pointer {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    margin-left: -12px;
+    width: 0; 
+    height: 0; 
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 24px solid #fff;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    user-select: none;
+  }
+  #question-box {
+    background: rgba(255 255 255 / 0.1);
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    max-width: 600px;
+    margin-top: 1.5rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    user-select: none;
+  }
+  #question-box h2 {
+    margin-top: 0;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .answers {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .answer {
+    background: rgba(255 255 255 / 0.2);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #fff;
+    border: 2px solid transparent;
+    transition: background-color 0.3s, border-color 0.3s;
+    display: flex;
+    align-items: center;
+  }
+  .answer:hover {
+    background: rgba(255 255 255 / 0.4);
+  }
+  .answer.correct {
+    background-color: #4caf50 !important;
+    border-color: #2e7d32 !important;
+    cursor: default;
+  }
+  .answer.incorrect {
+    background-color: #e53935 !important;
+    border-color: #b71c1c !important;
+    cursor: default;
+  }
+  #spin-button {
+    background: #fff;
+    color: #764ba2;
+    border: none;
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0.75rem 2rem;
+    border-radius: 30px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    margin-top: 1rem;
+    user-select: none;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  #spin-button:disabled {
+    background: #bbb;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  #result-message {
+    margin-top: 1rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-height: 1.4em;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+  <h1>Spin untuk dapatkan soal - Quiz Game</h1>
+  <div id="spinner-container">
+    <div id="pointer" title="Pointer"></div>
+    <canvas id="spinner" width="320" height="320" aria-label="Question spinner wheel" role="img" tabindex="0"></canvas>
+  </div>
+  <button id="spin-button" aria-live="polite" aria-label="Spin to select question">Spin</button>
+
+  <div id="question-box" hidden>
+    <h2 id="question-text"></h2>
+    <div class="answers" role="list" id="answers-list"></div>
+    <div id="result-message" aria-live="assertive"></div>
+  </div>
+
+<script>
+  (() => {
+    const questions = [
+      {
+        text: "Hewan yang hanya memakan tumbuhan disebut?",
+        choices: {
+          A: "Karnivora",
+          B: "Omnivora",
+          C: "Herbivora",
+          D: "Predator"
+        },
+        answer: "C"
+      },
+      {
+        text: "Contoh hewan Omnivora?",
+        choices: {
+          A: "Sapi",
+          B: "Kelinci",
+          C: "Ayam",
+          D: "Harimau"
+        },
+        answer: "B"
+      },
+      {
+        text: "Contoh hewan Karnivora?",
+        choices: {
+          A: "Singa",
+          B: "Burung",
+          C: "Kuda",
+          D: "Semut"
+        },
+        answer: "A"
+      },
+      {
+        text: "Jenis makanan hewan Karnivora?",
+        choices: {
+          A: "Kacang",
+          B: "Rumput",
+          C: "Daging",
+          D: "Buah"
+        },
+        answer: "C"
+      },
+      {
+        text: "Arti Omnnivora adalah?",
+        choices: {
+          A: "Pemakan Tumbuhan",
+          B: "Pemakan Daging",
+          C: "Pemakan Segala",
+          D: "Tidak makan"
+        },
+        answer: "C"
+      },
+      {
+        text: "Tikus golongan hewan?",
+        choices: {
+          A: "Karnivora",
+          B: "Omnivora",
+          C: "Predator",
+          D: "Herbivora"
+        },
+        answer: "B"
+      },
+      {
+        text: "Elang Di katakan Karnivora karena?",
+        choices: {
+          A: "Pemakan Daun",
+          B: "Pemakan Daging",
+          C: "Pemakan Kacang-kacangan",
+          D: "Pemakan Rumput"
+        },
+        answer: "B"
+      },
+      {
+        text: "Apa yang di maksud dengan Pemakan Segala",
+        choices: {
+          A: "Predator",
+          B: "Herbivora",
+          C: "Karnivora",
+          D: "Omnivora"
+        },
+        answer: "D"
+      }
+    ];
+
+    const canvas = document.getElementById('spinner');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spin-button');
+    const questionBox = document.getElementById('question-box');
+    const questionText = document.getElementById('question-text');
+    const answersList = document.getElementById('answers-list');
+    const resultMessage = document.getElementById('result-message');
+
+    const segmentCount = questions.length;
+    const canvasSize = canvas.width; // 320
+    const center = canvasSize / 2;
+    const radius = center - 20;
+
+    let currentRotation = 0;
+    let isSpinning = false;
+
+    // Colors for segments alternating
+    const colors = ['#8e79d4', '#a18cd1'];
+
+    // Draw spinner wheel segments and labels
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvasSize, canvasSize);
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate(currentRotation * Math.PI / 180);
+
+      const anglePerSegment = (2 * Math.PI) / segmentCount;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.font = "bold 18px Poppins";
+      ctx.fillStyle = '#fff';
+
+      for (let i = 0; i < segmentCount; i++) {
+        // Draw segment
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % 2];
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, i * anglePerSegment, (i + 1) * anglePerSegment);
+        ctx.lineTo(0, 0);
+        ctx.fill();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw text (Q1, Q2...)
+        ctx.fillStyle = '#fff';
+        ctx.save();
+        // Move to middle of segment arc edge
+        const textAngle = i * anglePerSegment + anglePerSegment / 2;
+        ctx.rotate(textAngle);
+        ctx.fillText("Q" + (i + 1), radius - 10, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    drawWheel();
+
+    // Spin function animates the wheel rotation with easing
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      resultMessage.textContent = '';
+      questionBox.hidden = true;
+      answersList.innerHTML = '';
+      spinBtn.disabled = true;
+
+      // Random spin angle: 3 to 6 full rotations plus random offset
+      const extraDegrees = Math.floor(Math.random() * 360);
+      const spins = Math.floor(Math.random() * 3) + 3; // 3 to 5
+      const totalDegrees = spins * 360 + extraDegrees;
+
+      const initialRotation = currentRotation;
+      const targetRotation = currentRotation + totalDegrees;
+      const duration = 4000; // ms
+      const startTime = performance.now();
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        if (elapsed < duration) {
+          // easeOutCubic easing
+          const t = elapsed / duration;
+          const easedT = 1 - Math.pow(1 - t, 3);
+          currentRotation = initialRotation + easedT * totalDegrees;
+          currentRotation %= 360;
+          drawWheel();
+          requestAnimationFrame(animate);
+        } else {
+          currentRotation = targetRotation % 360;
+          drawWheel();
+          isSpinning = false;
+          spinBtn.disabled = false;
+          onSpinEnd();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Calculate selected segment based on currentRotation
+    function onSpinEnd() {
+      // The pointer points at angle 0 (top). Wheel rotation clockwise.
+      // The segment at (360 - currentRotation + segmentAngle/2) determines the selected segment.
+      const anglePerSegment = 360 / segmentCount;
+      const normalizedAngle = (360 - currentRotation + anglePerSegment / 2) % 360;
+      const index = Math.floor(normalizedAngle / anglePerSegment) % segmentCount;
+      showQuestion(index);
+    }
+
+    // Display question and answers with event handlers
+    function showQuestion(index) {
+      const q = questions[index];
+      questionText.textContent = q.text;
+      answersList.innerHTML = '';
+      resultMessage.textContent = '';
+
+      for (const [key, choice] of Object.entries(q.choices)) {
+        const btn = document.createElement('button');
+        btn.className = 'answer';
+        btn.setAttribute('role', 'listitem');
+        btn.textContent = `${key}. ${choice}`;
+        btn.disabled = false;
+        btn.addEventListener('click', () => {
+          if (btn.disabled) return; // prevent multi clicks
+          // Disable all buttons
+          Array.from(answersList.children).forEach(b => b.disabled = true);
+          if (key === q.answer) {
+            btn.classList.add('correct');
+            resultMessage.textContent = 'Correct! 🎉';
+          } else {
+            btn.classList.add('incorrect');
+            resultMessage.textContent = `Incorrect! The correct answer is ${q.answer}.`;
+            // Highlight correct answer
+            Array.from(answersList.children).forEach(b => {
+              if (b.textContent.startsWith(q.answer + '.')) {
+                b.classList.add('correct');
+              }
+            });
+          }
+        });
+        answersList.appendChild(btn);
+      }
+
+      questionBox.hidden = false;
+      questionBox.scrollIntoView({behavior: "smooth"});
+    }
+
+    spinBtn.addEventListener('click', spinWheel);
+
+    // Accessibility: allow Enter/Space on canvas to spin
+    canvas.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        spinWheel();
+      }
+    });
+  })();
+</script>
+</body>
+</html>
+
